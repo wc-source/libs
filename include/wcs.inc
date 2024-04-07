@@ -105,9 +105,10 @@ native bool WCS_GetAntiAim(int client);
  * @param victim			An integer. (To check if the victim has an *antipassive* effect)
  * @param attacker			An integer. (To check if the attacker is affected by *break* (ult_break..))
  * @param skill				A char.
+ * @param weapon			A char.
  * @return					true if disabled, false otherwise.
  */
-native bool WCS_IsPassiveDisabled(int victim = 0, int attacker = 0, const char[] skill = "");
+native bool WCS_IsPassiveDisabled(int victim = 0, int attacker = 0, const char[] skill = "", const char[] weapon = "");
 
 /**
  * Is ally buff disabled?
@@ -303,9 +304,10 @@ native bool WCS_GetRealModel(int client, char[] model, int size);
  * @param client			An integer.
  * @param radius			A float.
  * @param checkImmun		A bool.
+ * @param checkTeam			A bool.
  * @return					random client on true.
  */
-native int WCS_GetRandomDistance(int client, float radius, bool checkImmun);
+native int WCS_GetRandomDistance(int client, float radius, bool checkImmun, bool checkTeam = true);
 
 /**
  * Get nearest client between radius.
@@ -313,9 +315,10 @@ native int WCS_GetRandomDistance(int client, float radius, bool checkImmun);
  * @param client			An integer.
  * @param radius			A float.
  * @param checkImmun		A bool.
+ * @param checkTeam			A bool.
  * @return					nearest client on true.
  */
-native int WCS_GetBestDistance(int client, float radius, bool checkImmun);
+native int WCS_GetBestDistance(int client, float radius, bool checkImmun, bool checkTeam = true);
 
 /**
  * Get nearest client to aim with radius.
@@ -324,9 +327,10 @@ native int WCS_GetBestDistance(int client, float radius, bool checkImmun);
  * @param distance			A float. (0.0 - прямо от прицела)
  * @param radius			A float.
  * @param checkImmun		A bool.
+ * @param checkTeam			A bool.
  * @return					nearest client on true.
  */
-native int WCS_GetNearAim(int client, float distance = 0.0, float radius, bool checkImmun);
+native int WCS_GetNearAim(int client, float distance = 0.0, float radius, bool checkImmun, bool checkTeam = true);
 
 /**
  * Check if line is blocked by smoke
@@ -371,9 +375,10 @@ native bool WCS_InitEffects(int client, int victim, const char[] effect);
  *
  * @param client			An integer.
  * @param value				An integer.
+ * @param callForward		A bool.
  * @return					true on success.
  */
-native bool WCS_GiveGold(int client, int value);
+native bool WCS_GiveGold(int client, int value, bool callForward = false);
 
 /**
  * Give client lvl.
@@ -403,14 +408,30 @@ native bool WCS_GiveCLvl(int client, int value);
 native bool WCS_GiveLBlvl(int client, int value);
 
 /**
- * Give client xp.
+ * Give XP to the client.
+ *
+ * @param client			An integer.
+ * @param value				An integer.
+ * @param reason			A char. [128]
+ * @param sendMessage		A bool.
+ * @param callForward		A bool.
+ * @return					true on success.
+ */
+native bool WCS_GiveXP(int client, int value, const char[] reason = "", bool sendMessage = true, bool callForward = false);
+
+/**
+ * (Old) Give XP to the client.
  *
  * @param client			An integer.
  * @param value				An integer.
  * @param announce			A bool.
  * @return					true on success.
  */
-native bool WCS_GiveXp(int client, int value, bool announce = true);
+#pragma deprecated Use WCS_GiveXP() instead
+stock bool WCS_GiveXp(int client, int value, bool announce = true)
+{
+	return WCS_GiveXP(client, value, "native", announce, announce);
+}
 
 /**
  * Set client skulls.
@@ -530,32 +551,32 @@ native bool WCS_IsRacePrivate(const char[] RaceName);
 /**
  * Gives a private race to client
  *
- * @param steamid			A char. [64]
- * @param racename			A char. [64]
+ * @param SteamID64			A char. [32]
+ * @param RaceName			A char. [64]
  * @param expiretime		An integer.
  * @return					true on success, false otherwise.
  */
-native bool WCS_GivePrivateRace(const char[] SteamId, const char[] RaceName, int expiretime = 0);
+native bool WCS_GivePrivateRace(const char[] SteamID64, const char[] RaceName, int expiretime = 0);
 
 /**
  * Take a private race from client
  *
- * @param steamid			A char. [64]
- * @param racename			A char. [64]
+ * @param SteamID64			A char. [32]
+ * @param RaceName			A char. [64]
  * @return					true on success, false otherwise.
  */
-native bool WCS_TakePrivateRace(const char[] SteamId, const char[] RaceName);
+native bool WCS_TakePrivateRace(const char[] SteamID64, const char[] RaceName);
 
 /**
  * Gives a VIP to client
  *
- * @param SteamId			A char. [64]
+ * @param SteamID64			A char. [32]
  * @param Name				A char. [64]
  * @param Group				A char. [128]
  * @param time				An int [in minutes]
  * @return					true on success, false otherwise.
  */
-native bool WCS_GiveVIP(const char[] SteamId, const char[] Name, const char[] Group, int time);
+native bool WCS_GiveVIP(const char[] SteamID64, const char[] Name, const char[] Group, int time);
 
 /**
  * Get required lvl for race
@@ -642,7 +663,7 @@ forward void WCS_OnSkillLvlUp(int client, int skilllvl, const char[] skillname);
  * Called on client lvl up
  *
  */
-forward void WCS_OnLvlUp(int client, int lvl);
+forward void WCS_OnLvlUp(int client, int lvls_gain);
 
 
 
@@ -674,7 +695,7 @@ forward void WCS_OnSkillsReset(int client, bool fully);
  * Called on client xp gain
  *
  */
-forward void WCS_OnXpGain(int client, int xp, bool lvlup);
+forward void WCS_OnXpGain(int client, int xp, int lvls_gain);
 
 
 
@@ -730,7 +751,7 @@ forward Action WCS_OnRaceChangePre(int client, const char[] OldRace, const char[
  * Called on client change race post
  *
  */
-forward void WCS_OnRaceChangePost(int client);
+forward void WCS_OnRaceChangePost(int client, const char[] OldRace, const char[] NewRace);
 
 
 
@@ -772,6 +793,14 @@ forward void WCS_OnSkillsSet(int client, const char[] Race);
  *
  */
 forward void WCS_OnClientLoaded(int client);
+
+
+
+/**
+ * Called on client disconnect (Before client become !WCS_IsPlayerLoaded())
+ *
+ */
+forward void WCS_OnClientDisconnect(int client);
 
 
 
@@ -828,3 +857,33 @@ forward void WCS_OnPlayerHookedPost(int client, int target, int damage);
  *
  */
 forward void WCS_OnPlayerEvadedPost(int client, int attacker, int chance);
+
+
+
+/**
+ * Called on player break totem post
+ *
+ * @param health	-	totem spawn health
+ *
+ */
+forward void WCS_OnPlayerBreakTotemPost(int client, int victim, int health);
+
+
+
+/**
+ * Called on player break prop post
+ *
+ * @param health	-	prop spawn health
+ *
+ */
+forward void WCS_OnPlayerBreakPropPost(int client, int victim, int health);
+
+
+
+/**
+ * Called on player break mine post
+ *
+ * @param health	-	mine spawn health
+ *
+ */
+forward void WCS_OnPlayerBreakMinePost(int client, int victim, int health);
